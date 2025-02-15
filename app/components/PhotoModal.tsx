@@ -115,32 +115,6 @@ export default function PhotoModal({
 
         <div className="fixed inset-0 overflow-y-auto">
           <div className="flex min-h-full items-center justify-center">
-            {/* 上一个相册按钮 */}
-            {hasPrevAlbum && onPrevAlbum && (
-              <button
-                onClick={onPrevAlbum}
-                className="fixed left-4 top-1/2 -translate-y-1/2 rounded-full bg-white/80 p-3 text-gray-800 hover:bg-white transition-all duration-200 hover:scale-110 z-50 group"
-              >
-                <ChevronLeftIcon className="h-8 w-8" />
-                <div className="absolute left-full ml-2 px-3 py-1 bg-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                  Previous Album
-                </div>
-              </button>
-            )}
-
-            {/* 下一个相册按钮 */}
-            {hasNextAlbum && onNextAlbum && (
-              <button
-                onClick={onNextAlbum}
-                className="fixed right-4 top-1/2 -translate-y-1/2 rounded-full bg-white/80 p-3 text-gray-800 hover:bg-white transition-all duration-200 hover:scale-110 z-50 group"
-              >
-                <ChevronRightIcon className="h-8 w-8" />
-                <div className="absolute right-full mr-2 px-3 py-1 bg-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                  Next Album
-                </div>
-              </button>
-            )}
-
             <Transition.Child
               as={Fragment}
               enter="ease-out duration-300"
@@ -163,7 +137,7 @@ export default function PhotoModal({
                 <div className="flex h-[80vh]">
                   <div className="flex-1 bg-black relative overflow-hidden">
                     <div 
-                      className="flex transition-transform duration-500 ease-in-out h-full"
+                      className="flex h-full transition-transform duration-500 ease-in-out"
                       style={{ 
                         width: `${album.photos.length * 100}%`,
                         transform: `translateX(-${(100 / album.photos.length) * currentPhotoIndex}%)`
@@ -172,13 +146,18 @@ export default function PhotoModal({
                       {album.photos.map((photo, index) => (
                         <div 
                           key={photo.id}
-                          className="relative"
+                          className="relative h-full"
                           style={{ width: `${100 / album.photos.length}%` }}
                         >
                           <img
                             src={photo.imageUrl}
                             alt=""
-                            className="h-full w-full object-contain"
+                            className="absolute inset-0 h-full w-full object-contain"
+                            style={{
+                              objectFit: 'contain',
+                              width: '100%',
+                              height: '100%'
+                            }}
                           />
                         </div>
                       ))}
