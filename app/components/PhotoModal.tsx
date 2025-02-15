@@ -33,19 +33,27 @@ interface PhotoModalProps {
 
 export default function PhotoModal({ album, isOpen, onClose }: PhotoModalProps) {
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
+  const [direction, setDirection] = useState(0); // -1 for left, 1 for right
 
   if (!album) return null;
 
   const nextPhoto = () => {
-    setCurrentPhotoIndex((prev) => 
-      prev < album.photos.length - 1 ? prev + 1 : prev
-    );
+    if (currentPhotoIndex < album.photos.length - 1) {
+      setDirection(1);
+      setCurrentPhotoIndex(prev => prev + 1);
+    }
   };
 
   const prevPhoto = () => {
-    setCurrentPhotoIndex((prev) => 
-      prev > 0 ? prev - 1 : prev
-    );
+    if (currentPhotoIndex > 0) {
+      setDirection(-1);
+      setCurrentPhotoIndex(prev => prev - 1);
+    }
+  };
+
+  const jumpToPhoto = (index: number) => {
+    setDirection(index > currentPhotoIndex ? 1 : -1);
+    setCurrentPhotoIndex(index);
   };
 
   return (
@@ -85,18 +93,34 @@ export default function PhotoModal({ album, isOpen, onClose }: PhotoModalProps) 
                   </button>
                 </div>
                 <div className="flex h-[80vh]">
-                  <div className="flex-1 bg-black relative">
-                    <img
-                      src={album.photos[currentPhotoIndex].imageUrl}
-                      alt=""
-                      className="h-full w-full object-contain"
-                    />
+                  <div className="flex-1 bg-black relative overflow-hidden">
+                    <div 
+                      className="flex transition-transform duration-500 ease-in-out h-full"
+                      style={{ 
+                        width: `${album.photos.length * 100}%`,
+                        transform: `translateX(-${(100 / album.photos.length) * currentPhotoIndex}%)`
+                      }}
+                    >
+                      {album.photos.map((photo, index) => (
+                        <div 
+                          key={photo.id}
+                          className="relative"
+                          style={{ width: `${100 / album.photos.length}%` }}
+                        >
+                          <img
+                            src={photo.imageUrl}
+                            alt=""
+                            className="h-full w-full object-contain"
+                          />
+                        </div>
+                      ))}
+                    </div>
                     {album.photos.length > 1 && (
                       <>
                         {currentPhotoIndex > 0 && (
                           <button
                             onClick={prevPhoto}
-                            className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full bg-white/80 p-2 text-gray-800 hover:bg-white"
+                            className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full bg-white/80 p-2 text-gray-800 hover:bg-white transition-all duration-200"
                           >
                             <ChevronLeftIcon className="h-6 w-6" />
                           </button>
@@ -104,7 +128,7 @@ export default function PhotoModal({ album, isOpen, onClose }: PhotoModalProps) 
                         {currentPhotoIndex < album.photos.length - 1 && (
                           <button
                             onClick={nextPhoto}
-                            className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-white/80 p-2 text-gray-800 hover:bg-white"
+                            className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-white/80 p-2 text-gray-800 hover:bg-white transition-all duration-200"
                           >
                             <ChevronRightIcon className="h-6 w-6" />
                           </button>
@@ -113,11 +137,11 @@ export default function PhotoModal({ album, isOpen, onClose }: PhotoModalProps) 
                           {album.photos.map((_, index) => (
                             <button
                               key={index}
-                              onClick={() => setCurrentPhotoIndex(index)}
-                              className={`w-2 h-2 rounded-full transition-all ${
+                              onClick={() => jumpToPhoto(index)}
+                              className={`w-2 h-2 rounded-full transition-all duration-200 ${
                                 index === currentPhotoIndex
                                   ? "bg-white scale-125"
-                                  : "bg-white/50"
+                                  : "bg-white/50 hover:bg-white/75"
                               }`}
                             />
                           ))}
