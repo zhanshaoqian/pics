@@ -6,6 +6,7 @@ import Masonry from "react-masonry-css";
 import { HeartIcon, ChatBubbleOvalLeftIcon, PhotoIcon } from "@heroicons/react/24/solid";
 import PhotoModal from "./components/PhotoModal";
 import AuthModal from "./components/AuthModal";
+import Notification from "./components/Notification";
 
 interface Comment {
   id: string;
@@ -30,12 +31,23 @@ interface Album {
   description: string;
 }
 
+interface User {
+  name: string;
+  email: string;
+}
+
 export default function Home() {
   const [albums, setAlbums] = useState<Album[]>([]);
   const [hasMore, setHasMore] = useState(true);
   const [page, setPage] = useState(1);
   const [selectedAlbum, setSelectedAlbum] = useState<Album | null>(null);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [notification, setNotification] = useState<{
+    show: boolean;
+    type: "success" | "error";
+    message: string;
+  }>({ show: false, type: "success", message: "" });
 
   const breakpointColumns = {
     default: 4,
@@ -93,16 +105,52 @@ export default function Home() {
 
   const { hasPrev, hasNext } = getAlbumNavigationState();
 
+  const showNotification = (type: "success" | "error", message: string) => {
+    setNotification({ show: true, type, message });
+    setTimeout(() => {
+      setNotification(prev => ({ ...prev, show: false }));
+    }, 3000);
+  };
+
+  const handleAuthSuccess = (userData: User) => {
+    setUser(userData);
+    showNotification("success", "Login successful!");
+  };
+
+  const handleLogout = () => {
+    setUser(null);
+    showNotification("success", "Logged out successfully");
+  };
+
   return (
     <main className="container mx-auto px-4 py-8">
       <div className="relative mb-8">
         <div className="absolute right-0 top-0 space-x-4">
-          <button
-            onClick={() => setIsAuthModalOpen(true)}
-            className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-          >
-            Sign In
-          </button>
+          {user ? (
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center">
+                <div className="h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center">
+                  <span className="text-indigo-600 font-medium">
+                    {user.name[0].toUpperCase()}
+                  </span>
+                </div>
+                <span className="ml-2 text-gray-700">{user.name}</span>
+              </div>
+              <button
+                onClick={handleLogout}
+                className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 focus:outline-none"
+              >
+                Sign Out
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setIsAuthModalOpen(true)}
+              className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            >
+              Sign In
+            </button>
+          )}
         </div>
         <div className="text-center">
           <h1 className="text-4xl font-bold">#zhansq</h1>
@@ -177,6 +225,14 @@ export default function Home() {
       <AuthModal
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
+        onAuthSuccess={handleAuthSuccess}
+      />
+
+      <Notification
+        show={notification.show}
+        type={notification.type}
+        message={notification.message}
+        onClose={() => setNotification(prev => ({ ...prev, show: false }))}
       />
     </main>
   );
