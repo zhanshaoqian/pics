@@ -1,6 +1,7 @@
 import { Dialog, Transition } from "@headlessui/react";
-import { Fragment, useState, useEffect, useCallback } from "react";
-import { XMarkIcon, ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
+import { Fragment, useState, useEffect, useCallback, useRef } from "react";
+import { XMarkIcon, ChevronLeftIcon, ChevronRightIcon, HeartIcon } from "@heroicons/react/24/outline";
+import { HeartIcon as HeartIconSolid } from "@heroicons/react/24/solid";
 
 interface Comment {
   id: string;
@@ -25,6 +26,11 @@ interface Album {
   description: string;
 }
 
+interface User {
+  name: string;
+  email: string;
+}
+
 interface PhotoModalProps {
   album: Album | null;
   isOpen: boolean;
@@ -33,6 +39,9 @@ interface PhotoModalProps {
   onNextAlbum?: () => void;
   hasPrevAlbum?: boolean;
   hasNextAlbum?: boolean;
+  user: User | null;
+  onLike?: (albumId: number) => void;
+  onComment?: (albumId: number, comment: string) => void;
 }
 
 export default function PhotoModal({ 
@@ -42,17 +51,28 @@ export default function PhotoModal({
   onPrevAlbum,
   onNextAlbum,
   hasPrevAlbum = false,
-  hasNextAlbum = false
+  hasNextAlbum = false,
+  user,
+  onLike,
+  onComment
 }: PhotoModalProps) {
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
   const [direction, setDirection] = useState(0);
+  const [newComment, setNewComment] = useState("");
+  const [isLiked, setIsLiked] = useState(false);
+  const [localComments, setLocalComments] = useState<Comment[]>([]);
+  const commentsEndRef = useRef<HTMLDivElement>(null);
 
-  // 当相册改变时，重置当前照片索引
+  const scrollToBottom = () => {
+    commentsEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
   useEffect(() => {
     if (album?.id) {
       setCurrentPhotoIndex(0);
+      setLocalComments(album.comments);
     }
-  }, [album?.id]);
+  }, [album?.id, album?.comments]);
 
   const nextPhoto = useCallback(() => {
     if (!album) return;
@@ -95,6 +115,30 @@ export default function PhotoModal({
     setDirection(index > currentPhotoIndex ? 1 : -1);
     setCurrentPhotoIndex(index);
   }, [currentPhotoIndex]);
+
+  const handleLike = () => {
+    if (!user) return;
+    setIsLiked(!isLiked);
+    onLike?.(album!.id);
+  };
+
+  const handleSubmitComment = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user || !newComment.trim()) return;
+    
+    const comment = {
+      id: Math.random().toString(36).substr(2, 9),
+      username: user.name,
+      text: newComment.trim(),
+      timestamp: new Date().toISOString()
+    };
+
+    setLocalComments(prev => [...prev, comment]);
+    onComment?.(album!.id, newComment.trim());
+    setNewComment("");
+    
+    setTimeout(scrollToBottom, 100);
+  };
 
   if (!album) return null;
 
@@ -198,16 +242,30 @@ export default function PhotoModal({
                   </div>
                   <div className="w-96 flex flex-col">
                     <div className="border-b p-4">
-                      <div className="flex items-center">
-                        <div className="h-8 w-8 rounded-full bg-gray-200"></div>
-                        <div className="ml-3">
-                          <p className="font-medium">{album.username}</p>
-                          <p className="text-sm text-gray-500">{album.description}</p>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center">
+                          <div className="h-8 w-8 rounded-full bg-gray-200"></div>
+                          <div className="ml-3">
+                            <p className="font-medium">{album.username}</p>
+                            <p className="text-sm text-gray-500">{album.description}</p>
+                          </div>
                         </div>
+                        {user && (
+                          <button
+                            onClick={handleLike}
+                            className="focus:outline-none"
+                          >
+                            {isLiked ? (
+                              <HeartIconSolid className="h-6 w-6 text-red-500" />
+                            ) : (
+                              <HeartIcon className="h-6 w-6 text-gray-400 hover:text-red-500" />
+                            )}
+                          </button>
+                        )}
                       </div>
                     </div>
-                    <div className="flex-1 overflow-y-auto p-4">
-                      {album.comments.map((comment) => (
+                    <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
+                      {localComments.map((comment) => (
                         <div key={comment.id} className="mb-4">
                           <div className="flex items-start">
                             <div className="h-8 w-8 rounded-full bg-gray-200"></div>
@@ -221,9 +279,10 @@ export default function PhotoModal({
                           </div>
                         </div>
                       ))}
+                      <div ref={commentsEndRef} />
                     </div>
                     <div className="border-t p-4">
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center space-x-4">
                           <span>{album.likes} likes</span>
                           <span className="text-gray-500">•</span>
@@ -233,6 +292,28 @@ export default function PhotoModal({
                           {new Date(album.timestamp).toLocaleDateString()}
                         </div>
                       </div>
+                      {user ? (
+                        <form onSubmit={handleSubmitComment} className="flex items-center gap-2">
+                          <input
+                            type="text"
+                            value={newComment}
+                            onChange={(e) => setNewComment(e.target.value)}
+                            placeholder="Add a comment..."
+                            className="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                          />
+                          <button
+                            type="submit"
+                            disabled={!newComment.trim()}
+                            className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-indigo-300"
+                          >
+                            Post
+                          </button>
+                        </form>
+                      ) : (
+                        <p className="text-sm text-gray-500 text-center">
+                          Please <button onClick={onClose} className="text-indigo-600 hover:text-indigo-500">sign in</button> to like or comment
+                        </p>
+                      )}
                     </div>
                   </div>
                 </div>

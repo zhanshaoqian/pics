@@ -130,6 +130,46 @@ export default function Home() {
     showNotification("success", "Logged out successfully");
   };
 
+  const handleLike = (albumId: number) => {
+    const updatedAlbums = albums.map(album => {
+      if (album.id === albumId) {
+        return {
+          ...album,
+          likes: album.likes + 1
+        };
+      }
+      return album;
+    });
+    setAlbums(updatedAlbums);
+  };
+
+  const handleComment = (albumId: number, commentText: string) => {
+    const updatedAlbums = albums.map(album => {
+      if (album.id === albumId) {
+        const newComment = {
+          id: Math.random().toString(36).substr(2, 9),
+          username: user!.name,
+          text: commentText,
+          timestamp: new Date().toISOString()
+        };
+        return {
+          ...album,
+          comments: [...album.comments, newComment]
+        };
+      }
+      return album;
+    });
+    setAlbums(updatedAlbums);
+    
+    // Update the selected album if it's the one being commented on
+    if (selectedAlbum?.id === albumId) {
+      setSelectedAlbum(updatedAlbums.find(album => album.id === albumId) || null);
+    }
+
+    // Show success notification
+    showNotification("success", "Comment posted successfully!");
+  };
+
   return (
     <main className="container mx-auto px-4 py-8">
       <div className="relative mb-8">
@@ -228,6 +268,9 @@ export default function Home() {
         onNextAlbum={handleNextAlbum}
         hasPrevAlbum={hasPrev}
         hasNextAlbum={hasNext}
+        user={user}
+        onLike={handleLike}
+        onComment={handleComment}
       />
 
       <AuthModal
