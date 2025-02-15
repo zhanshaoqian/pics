@@ -1,0 +1,33 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 0, 0, 0;
+  --background-rgb: 255, 255, 255;
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: rgb(var(--background-rgb));
+}
+
+/* Masonry grid styles */
+.masonry-grid {
+  display: flex;
+  width: auto;
+  margin-left: -16px; /* gutter size offset */
+}
+
+.masonry-grid_column {
+  padding-left: 16px; /* gutter size */
+  background-clip: padding-box;
+}
+
+/* 图片容器样式 */
+.photo-container img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+} 
