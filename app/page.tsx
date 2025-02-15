@@ -5,6 +5,7 @@ import InfiniteScroll from "react-infinite-scroll-component";
 import Masonry from "react-masonry-css";
 import { HeartIcon, ChatBubbleOvalLeftIcon, PhotoIcon } from "@heroicons/react/24/solid";
 import PhotoModal from "./components/PhotoModal";
+import AuthModal from "./components/AuthModal";
 
 interface Comment {
   id: string;
@@ -34,6 +35,7 @@ export default function Home() {
   const [hasMore, setHasMore] = useState(true);
   const [page, setPage] = useState(1);
   const [selectedAlbum, setSelectedAlbum] = useState<Album | null>(null);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
   const breakpointColumns = {
     default: 4,
@@ -93,9 +95,19 @@ export default function Home() {
 
   return (
     <main className="container mx-auto px-4 py-8">
-      <div className="mb-8 text-center">
-        <h1 className="text-4xl font-bold">#zhansq</h1>
-        <p className="mt-2 text-gray-600">Explore beautiful plant photos</p>
+      <div className="relative mb-8">
+        <div className="absolute right-0 top-0 space-x-4">
+          <button
+            onClick={() => setIsAuthModalOpen(true)}
+            className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+          >
+            Sign In
+          </button>
+        </div>
+        <div className="text-center">
+          <h1 className="text-4xl font-bold">#zhansq</h1>
+          <p className="mt-2 text-gray-600">Explore beautiful plant photos</p>
+        </div>
       </div>
 
       <InfiniteScroll
@@ -160,6 +172,11 @@ export default function Home() {
         onNextAlbum={handleNextAlbum}
         hasPrevAlbum={hasPrev}
         hasNextAlbum={hasNext}
+      />
+
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
       />
     </main>
   );
