@@ -1,5 +1,5 @@
 import { Dialog, Transition } from "@headlessui/react";
-import { Fragment, useState } from "react";
+import { Fragment, useState, useEffect, useCallback } from "react";
 import { XMarkIcon, ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
 
 interface Comment {
@@ -29,32 +29,74 @@ interface PhotoModalProps {
   album: Album | null;
   isOpen: boolean;
   onClose: () => void;
+  onPrevAlbum?: () => void;
+  onNextAlbum?: () => void;
+  hasPrevAlbum?: boolean;
+  hasNextAlbum?: boolean;
 }
 
-export default function PhotoModal({ album, isOpen, onClose }: PhotoModalProps) {
+export default function PhotoModal({ 
+  album, 
+  isOpen, 
+  onClose,
+  onPrevAlbum,
+  onNextAlbum,
+  hasPrevAlbum = false,
+  hasNextAlbum = false
+}: PhotoModalProps) {
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
-  const [direction, setDirection] = useState(0); // -1 for left, 1 for right
+  const [direction, setDirection] = useState(0);
 
-  if (!album) return null;
+  // 当相册改变时，重置当前照片索引
+  useEffect(() => {
+    if (album?.id) {
+      setCurrentPhotoIndex(0);
+    }
+  }, [album?.id]);
 
-  const nextPhoto = () => {
+  const nextPhoto = useCallback(() => {
+    if (!album) return;
+    
     if (currentPhotoIndex < album.photos.length - 1) {
       setDirection(1);
       setCurrentPhotoIndex(prev => prev + 1);
+    } else if (hasNextAlbum && onNextAlbum) {
+      onNextAlbum();
     }
-  };
+  }, [album, currentPhotoIndex, hasNextAlbum, onNextAlbum]);
 
-  const prevPhoto = () => {
+  const prevPhoto = useCallback(() => {
+    if (!album) return;
+    
     if (currentPhotoIndex > 0) {
       setDirection(-1);
       setCurrentPhotoIndex(prev => prev - 1);
+    } else if (hasPrevAlbum && onPrevAlbum) {
+      onPrevAlbum();
     }
-  };
+  }, [album, currentPhotoIndex, hasPrevAlbum, onPrevAlbum]);
 
-  const jumpToPhoto = (index: number) => {
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    if (e.key === 'ArrowLeft') {
+      prevPhoto();
+    } else if (e.key === 'ArrowRight') {
+      nextPhoto();
+    }
+  }, [nextPhoto, prevPhoto]);
+
+  useEffect(() => {
+    if (isOpen) {
+      window.addEventListener('keydown', handleKeyDown);
+      return () => window.removeEventListener('keydown', handleKeyDown);
+    }
+  }, [isOpen, handleKeyDown]);
+
+  const jumpToPhoto = useCallback((index: number) => {
     setDirection(index > currentPhotoIndex ? 1 : -1);
     setCurrentPhotoIndex(index);
-  };
+  }, [currentPhotoIndex]);
+
+  if (!album) return null;
 
   return (
     <Transition appear show={isOpen} as={Fragment}>
@@ -72,7 +114,33 @@ export default function PhotoModal({ album, isOpen, onClose }: PhotoModalProps) 
         </Transition.Child>
 
         <div className="fixed inset-0 overflow-y-auto">
-          <div className="flex min-h-full items-center justify-center p-4">
+          <div className="flex min-h-full items-center justify-center">
+            {/* 上一个相册按钮 */}
+            {hasPrevAlbum && onPrevAlbum && (
+              <button
+                onClick={onPrevAlbum}
+                className="fixed left-4 top-1/2 -translate-y-1/2 rounded-full bg-white/80 p-3 text-gray-800 hover:bg-white transition-all duration-200 hover:scale-110 z-50 group"
+              >
+                <ChevronLeftIcon className="h-8 w-8" />
+                <div className="absolute left-full ml-2 px-3 py-1 bg-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                  Previous Album
+                </div>
+              </button>
+            )}
+
+            {/* 下一个相册按钮 */}
+            {hasNextAlbum && onNextAlbum && (
+              <button
+                onClick={onNextAlbum}
+                className="fixed right-4 top-1/2 -translate-y-1/2 rounded-full bg-white/80 p-3 text-gray-800 hover:bg-white transition-all duration-200 hover:scale-110 z-50 group"
+              >
+                <ChevronRightIcon className="h-8 w-8" />
+                <div className="absolute right-full mr-2 px-3 py-1 bg-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                  Next Album
+                </div>
+              </button>
+            )}
+
             <Transition.Child
               as={Fragment}
               enter="ease-out duration-300"
@@ -82,7 +150,7 @@ export default function PhotoModal({ album, isOpen, onClose }: PhotoModalProps) 
               leaveFrom="opacity-100 scale-100"
               leaveTo="opacity-0 scale-95"
             >
-              <Dialog.Panel className="w-full max-w-6xl transform overflow-hidden rounded-xl bg-white shadow-xl transition-all">
+              <Dialog.Panel className="w-full max-w-6xl transform overflow-hidden rounded-xl bg-white shadow-xl transition-all mx-20">
                 <div className="absolute right-4 top-4 z-10">
                   <button
                     type="button"

@@ -59,6 +59,38 @@ export default function Home() {
     fetchAlbums();
   }, []);
 
+  const handlePrevAlbum = () => {
+    if (selectedAlbum) {
+      const currentIndex = albums.findIndex(album => album.id === selectedAlbum.id);
+      if (currentIndex > 0) {
+        setSelectedAlbum(albums[currentIndex - 1]);
+      }
+    }
+  };
+
+  const handleNextAlbum = () => {
+    if (selectedAlbum) {
+      const currentIndex = albums.findIndex(album => album.id === selectedAlbum.id);
+      if (currentIndex < albums.length - 1) {
+        setSelectedAlbum(albums[currentIndex + 1]);
+      } else if (hasMore) {
+        // 如果是最后一个相册，且还有更多数据，则加载下一页
+        fetchAlbums();
+      }
+    }
+  };
+
+  const getAlbumNavigationState = () => {
+    if (!selectedAlbum) return { hasPrev: false, hasNext: false };
+    const currentIndex = albums.findIndex(album => album.id === selectedAlbum.id);
+    return {
+      hasPrev: currentIndex > 0,
+      hasNext: currentIndex < albums.length - 1 || hasMore
+    };
+  };
+
+  const { hasPrev, hasNext } = getAlbumNavigationState();
+
   return (
     <main className="container mx-auto px-4 py-8">
       <div className="mb-8 text-center">
@@ -124,6 +156,10 @@ export default function Home() {
         album={selectedAlbum}
         isOpen={!!selectedAlbum}
         onClose={() => setSelectedAlbum(null)}
+        onPrevAlbum={handlePrevAlbum}
+        onNextAlbum={handleNextAlbum}
+        hasPrevAlbum={hasPrev}
+        hasNextAlbum={hasNext}
       />
     </main>
   );
