@@ -42,6 +42,7 @@ interface PhotoModalProps {
   user: User | null;
   onLike?: (albumId: number) => void;
   onComment?: (albumId: number, comment: string) => void;
+  onSignInClick?: () => void;
 }
 
 export default function PhotoModal({ 
@@ -54,7 +55,8 @@ export default function PhotoModal({
   hasNextAlbum = false,
   user,
   onLike,
-  onComment
+  onComment,
+  onSignInClick
 }: PhotoModalProps) {
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
   const [direction, setDirection] = useState(0);
@@ -311,7 +313,7 @@ export default function PhotoModal({
                         </form>
                       ) : (
                         <p className="text-sm text-gray-500 text-center">
-                          Please <button onClick={onClose} className="text-indigo-600 hover:text-indigo-500">sign in</button> to like or comment
+                          Please <button onClick={(e) => { e.preventDefault(); onSignInClick?.(); }} className="text-indigo-600 hover:text-indigo-500">sign in</button> to like or comment
                         </p>
                       )}
                     </div>

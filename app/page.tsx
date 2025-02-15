@@ -42,13 +42,7 @@ export default function Home() {
   const [page, setPage] = useState(1);
   const [selectedAlbum, setSelectedAlbum] = useState<Album | null>(null);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-  const [user, setUser] = useState<User | null>(() => {
-    if (typeof window !== 'undefined') {
-      const savedUser = localStorage.getItem('user');
-      return savedUser ? JSON.parse(savedUser) : null;
-    }
-    return null;
-  });
+  const [user, setUser] = useState<User | null>(null);
   const [notification, setNotification] = useState<{
     show: boolean;
     type: "success" | "error";
@@ -77,6 +71,13 @@ export default function Home() {
 
   useEffect(() => {
     fetchAlbums();
+  }, []);
+
+  useEffect(() => {
+    const savedUser = localStorage.getItem('user');
+    if (savedUser) {
+      setUser(JSON.parse(savedUser));
+    }
   }, []);
 
   const handlePrevAlbum = () => {
@@ -271,6 +272,7 @@ export default function Home() {
         user={user}
         onLike={handleLike}
         onComment={handleComment}
+        onSignInClick={() => setIsAuthModalOpen(true)}
       />
 
       <AuthModal
