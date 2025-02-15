@@ -1,6 +1,6 @@
 import { Dialog, Transition } from "@headlessui/react";
-import { Fragment } from "react";
-import { XMarkIcon } from "@heroicons/react/24/outline";
+import { Fragment, useState } from "react";
+import { XMarkIcon, ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
 
 interface Comment {
   id: string;
@@ -9,23 +9,44 @@ interface Comment {
   timestamp: string;
 }
 
-interface Photo {
-  id: number;
+interface AlbumPhoto {
+  id: string;
   imageUrl: string;
+  thumbnailUrl: string;
+}
+
+interface Album {
+  id: number;
+  photos: AlbumPhoto[];
   likes: number;
   comments: Comment[];
   username: string;
   timestamp: string;
+  description: string;
 }
 
 interface PhotoModalProps {
-  photo: Photo | null;
+  album: Album | null;
   isOpen: boolean;
   onClose: () => void;
 }
 
-export default function PhotoModal({ photo, isOpen, onClose }: PhotoModalProps) {
-  if (!photo) return null;
+export default function PhotoModal({ album, isOpen, onClose }: PhotoModalProps) {
+  const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
+
+  if (!album) return null;
+
+  const nextPhoto = () => {
+    setCurrentPhotoIndex((prev) => 
+      prev < album.photos.length - 1 ? prev + 1 : prev
+    );
+  };
+
+  const prevPhoto = () => {
+    setCurrentPhotoIndex((prev) => 
+      prev > 0 ? prev - 1 : prev
+    );
+  };
 
   return (
     <Transition appear show={isOpen} as={Fragment}>
@@ -64,24 +85,58 @@ export default function PhotoModal({ photo, isOpen, onClose }: PhotoModalProps) 
                   </button>
                 </div>
                 <div className="flex h-[80vh]">
-                  <div className="flex-1 bg-black">
+                  <div className="flex-1 bg-black relative">
                     <img
-                      src={photo.imageUrl}
+                      src={album.photos[currentPhotoIndex].imageUrl}
                       alt=""
                       className="h-full w-full object-contain"
                     />
+                    {album.photos.length > 1 && (
+                      <>
+                        {currentPhotoIndex > 0 && (
+                          <button
+                            onClick={prevPhoto}
+                            className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full bg-white/80 p-2 text-gray-800 hover:bg-white"
+                          >
+                            <ChevronLeftIcon className="h-6 w-6" />
+                          </button>
+                        )}
+                        {currentPhotoIndex < album.photos.length - 1 && (
+                          <button
+                            onClick={nextPhoto}
+                            className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-white/80 p-2 text-gray-800 hover:bg-white"
+                          >
+                            <ChevronRightIcon className="h-6 w-6" />
+                          </button>
+                        )}
+                        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+                          {album.photos.map((_, index) => (
+                            <button
+                              key={index}
+                              onClick={() => setCurrentPhotoIndex(index)}
+                              className={`w-2 h-2 rounded-full transition-all ${
+                                index === currentPhotoIndex
+                                  ? "bg-white scale-125"
+                                  : "bg-white/50"
+                              }`}
+                            />
+                          ))}
+                        </div>
+                      </>
+                    )}
                   </div>
                   <div className="w-96 flex flex-col">
                     <div className="border-b p-4">
                       <div className="flex items-center">
                         <div className="h-8 w-8 rounded-full bg-gray-200"></div>
                         <div className="ml-3">
-                          <p className="font-medium">{photo.username}</p>
+                          <p className="font-medium">{album.username}</p>
+                          <p className="text-sm text-gray-500">{album.description}</p>
                         </div>
                       </div>
                     </div>
                     <div className="flex-1 overflow-y-auto p-4">
-                      {photo.comments.map((comment) => (
+                      {album.comments.map((comment) => (
                         <div key={comment.id} className="mb-4">
                           <div className="flex items-start">
                             <div className="h-8 w-8 rounded-full bg-gray-200"></div>
@@ -99,10 +154,12 @@ export default function PhotoModal({ photo, isOpen, onClose }: PhotoModalProps) 
                     <div className="border-t p-4">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-4">
-                          <span>{photo.likes} likes</span>
+                          <span>{album.likes} likes</span>
+                          <span className="text-gray-500">•</span>
+                          <span className="text-gray-500">{album.photos.length} photos</span>
                         </div>
                         <div className="text-xs text-gray-400">
-                          {new Date(photo.timestamp).toLocaleDateString()}
+                          {new Date(album.timestamp).toLocaleDateString()}
                         </div>
                       </div>
                     </div>

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import InfiniteScroll from "react-infinite-scroll-component";
 import Masonry from "react-masonry-css";
-import { HeartIcon, ChatBubbleOvalLeftIcon } from "@heroicons/react/24/solid";
+import { HeartIcon, ChatBubbleOvalLeftIcon, PhotoIcon } from "@heroicons/react/24/solid";
 import PhotoModal from "./components/PhotoModal";
 
 interface Comment {
@@ -13,21 +13,27 @@ interface Comment {
   timestamp: string;
 }
 
-interface Photo {
-  id: number;
+interface AlbumPhoto {
+  id: string;
   imageUrl: string;
   thumbnailUrl: string;
+}
+
+interface Album {
+  id: number;
+  photos: AlbumPhoto[];
   likes: number;
   comments: Comment[];
   username: string;
   timestamp: string;
+  description: string;
 }
 
 export default function Home() {
-  const [photos, setPhotos] = useState<Photo[]>([]);
+  const [albums, setAlbums] = useState<Album[]>([]);
   const [hasMore, setHasMore] = useState(true);
   const [page, setPage] = useState(1);
-  const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null);
+  const [selectedAlbum, setSelectedAlbum] = useState<Album | null>(null);
 
   const breakpointColumns = {
     default: 4,
@@ -37,20 +43,20 @@ export default function Home() {
     640: 1
   };
 
-  const fetchPhotos = async () => {
+  const fetchAlbums = async () => {
     try {
       const response = await fetch(`/api/photos?page=${page}&limit=12`);
       const data = await response.json();
-      setPhotos((prevPhotos) => [...prevPhotos, ...data.photos]);
+      setAlbums((prevAlbums) => [...prevAlbums, ...data.albums]);
       setHasMore(data.hasMore);
       setPage((prevPage) => prevPage + 1);
     } catch (error) {
-      console.error("Error fetching photos:", error);
+      console.error("Error fetching albums:", error);
     }
   };
 
   useEffect(() => {
-    fetchPhotos();
+    fetchAlbums();
   }, []);
 
   return (
@@ -61,8 +67,8 @@ export default function Home() {
       </div>
 
       <InfiniteScroll
-        dataLength={photos.length}
-        next={fetchPhotos}
+        dataLength={albums.length}
+        next={fetchAlbums}
         hasMore={hasMore}
         loader={<div className="text-center py-4">Loading...</div>}
         endMessage={
@@ -76,27 +82,35 @@ export default function Home() {
           className="flex -ml-4 w-auto"
           columnClassName="pl-4 bg-clip-padding"
         >
-          {photos.map((photo) => (
+          {albums.map((album) => (
             <div
-              key={photo.id}
+              key={album.id}
               className="mb-4 relative group cursor-pointer"
-              onClick={() => setSelectedPhoto(photo)}
+              onClick={() => setSelectedAlbum(album)}
             >
               <div className="relative overflow-hidden rounded-lg">
                 <img
-                  src={photo.thumbnailUrl}
+                  src={album.photos[0].thumbnailUrl}
                   alt=""
                   className="w-full object-cover transition-transform duration-300 group-hover:scale-105"
                 />
+                {album.photos.length > 1 && (
+                  <div className="absolute top-4 right-4">
+                    <div className="flex items-center gap-1 bg-black/50 text-white px-2 py-1 rounded-lg">
+                      <PhotoIcon className="w-4 h-4" />
+                      <span className="text-sm">{album.photos.length}</span>
+                    </div>
+                  </div>
+                )}
                 <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all duration-300 flex items-center justify-center">
                   <div className="flex gap-6 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                     <div className="flex items-center gap-2">
                       <HeartIcon className="w-6 h-6" />
-                      <span className="text-sm font-medium">{photo.likes}</span>
+                      <span className="text-sm font-medium">{album.likes}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <ChatBubbleOvalLeftIcon className="w-6 h-6" />
-                      <span className="text-sm font-medium">{photo.comments.length}</span>
+                      <span className="text-sm font-medium">{album.comments.length}</span>
                     </div>
                   </div>
                 </div>
@@ -107,9 +121,9 @@ export default function Home() {
       </InfiniteScroll>
 
       <PhotoModal
-        photo={selectedPhoto}
-        isOpen={!!selectedPhoto}
-        onClose={() => setSelectedPhoto(null)}
+        album={selectedAlbum}
+        isOpen={!!selectedAlbum}
+        onClose={() => setSelectedAlbum(null)}
       />
     </main>
   );
