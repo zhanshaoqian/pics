@@ -152,9 +152,9 @@ export default function PhotoModal({
                           <img
                             src={photo.imageUrl}
                             alt=""
-                            className="absolute inset-0 h-full w-full object-contain"
+                            className="absolute inset-0 h-full w-full object-cover"
                             style={{
-                              objectFit: 'contain',
+                              objectFit: 'cover',
                               width: '100%',
                               height: '100%'
                             }}
