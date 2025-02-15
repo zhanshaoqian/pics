@@ -42,7 +42,13 @@ export default function Home() {
   const [page, setPage] = useState(1);
   const [selectedAlbum, setSelectedAlbum] = useState<Album | null>(null);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<User | null>(() => {
+    if (typeof window !== 'undefined') {
+      const savedUser = localStorage.getItem('user');
+      return savedUser ? JSON.parse(savedUser) : null;
+    }
+    return null;
+  });
   const [notification, setNotification] = useState<{
     show: boolean;
     type: "success" | "error";
@@ -114,11 +120,13 @@ export default function Home() {
 
   const handleAuthSuccess = (userData: User) => {
     setUser(userData);
+    localStorage.setItem('user', JSON.stringify(userData));
     showNotification("success", "Login successful!");
   };
 
   const handleLogout = () => {
     setUser(null);
+    localStorage.removeItem('user');
     showNotification("success", "Logged out successfully");
   };
 
